@@ -47,7 +47,7 @@
 #include <unistd.h>
 
 #include "scpi/scpi.h"
-#include "../examples/common/scpi-def.h"
+#include "../common/scpi-def.h"
 
 
 #define CONTROL_PORT 5026

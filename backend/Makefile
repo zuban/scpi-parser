@@ -1,7 +1,7 @@
 
 PROG = server
 
-SRCS = main.c ../examples/common/scpi-def.c
+SRCS = main.c ../common/scpi-def.c
 CFLAGS += -Wextra -Wmissing-prototypes -Wimplicit -I ../libscpi/inc/
 LDFLAGS += ../libscpi/dist/libscpi.a -Wl,--as-needed
 
