@@ -50,15 +50,13 @@
 #include "../common/scpi-def.h"
 
 
-#define CONTROL_PORT 5026
-
 
 
 typedef struct {
     int io;
     int io_listen;
-    int control_io;
-    int control_io_listen;
+    int monitor_io;
+    int monitor_io_listen;
     FILE * fio;
     fd_set fds;
 } user_data_t;
@@ -67,6 +65,8 @@ size_t SCPI_Write(scpi_t * context, const char * data, size_t len) {
     if (context->user_context != NULL) {
         user_data_t * u = (user_data_t *)(context->user_context);
         if (u->fio) {
+             // send(u->io,str,strlen(str),0);
+              // send(u->io,data,len,0);
             return fwrite(data, 1, len, u->fio);
         }
     }
@@ -95,16 +95,16 @@ scpi_result_t SCPI_Control(scpi_t * context, scpi_ctrl_name_t ctrl, scpi_reg_val
     char b[16];
 
     if (SCPI_CTRL_SRQ == ctrl) {
-        fprintf(stderr, "**SRQ: 0x%X (%d)\r\n", val, val);
+        fprintf(stderr, "**Monitor: 0x%X (%d)\r\n", val, val);
     } else {
         fprintf(stderr, "**CTRL %02x: 0x%X (%d)\r\n", ctrl, val, val);
     }
     
     if (context->user_context != NULL) {
         user_data_t * u = (user_data_t *)(context->user_context);
-        if (u->control_io >= 0) {
-            snprintf(b, sizeof(b), "SRQ%d\r\n", val);
-            return write(u->control_io, b, strlen(b)) > 0 ? SCPI_RES_OK : SCPI_RES_ERR;
+        if (u->monitor_io >= 0) {
+            snprintf(b, sizeof(b), "Monitor%d\r\n", val);
+            return write(u->monitor_io, b, strlen(b)) > 0 ? SCPI_RES_OK : SCPI_RES_ERR;
         }
     }    
     return SCPI_RES_OK;
@@ -116,7 +116,7 @@ scpi_result_t SCPI_Reset(scpi_t * context) {
 }
 
 scpi_result_t SCPI_SystemCommTcpipControlQ(scpi_t * context) {
-    SCPI_ResultInt(context, CONTROL_PORT);
+    SCPI_ResultInt(context, 5026);
     return SCPI_RES_OK;
 }
 
@@ -193,12 +193,12 @@ static int waitServer(user_data_t * user_data) {
         FD_SET(user_data->io_listen, &user_data->fds);
     }
     
-    if (user_data->control_io >= 0) {
-        FD_SET(user_data->control_io, &user_data->fds);
+    if (user_data->monitor_io >= 0) {
+        FD_SET(user_data->monitor_io, &user_data->fds);
     }
     
-    if (user_data->control_io_listen >= 0) {
-        FD_SET(user_data->control_io_listen, &user_data->fds);
+    if (user_data->monitor_io_listen >= 0) {
+        FD_SET(user_data->monitor_io_listen, &user_data->fds);
     }
     
     timeout.tv_sec  = 5;
@@ -218,17 +218,17 @@ static int processIoListen(user_data_t * user_data) {
     user_data->io = accept(user_data->io_listen, (struct sockaddr *)&cliaddr, &clilen);
     user_data->fio = fdopen(user_data->io, "r+");
     
-    printf("Connection established %s\r\n", inet_ntoa(cliaddr.sin_addr));
+    printf("device connection established %s\r\n", inet_ntoa(cliaddr.sin_addr));
 }
 
-static int processSrqIoListen(user_data_t * user_data) {
+static int processMonitorIoListen(user_data_t * user_data) {
     struct sockaddr_in cliaddr;
     socklen_t clilen;
     clilen = sizeof(cliaddr);
 
-    user_data->control_io = accept(user_data->control_io_listen, (struct sockaddr *)&cliaddr, &clilen); 
-    user_data->fio = fdopen(user_data->control_io, "r+");   
-    printf("Control Connection established %s\r\n", inet_ntoa(cliaddr.sin_addr));
+    user_data->monitor_io = accept(user_data->monitor_io_listen, (struct sockaddr *)&cliaddr, &clilen); 
+    user_data->fio = fdopen(user_data->monitor_io, "r+");   
+    printf("monitor connection established %s\r\n", inet_ntoa(cliaddr.sin_addr));
 }
 
 static void closeIo(user_data_t * user_data) {
@@ -237,10 +237,10 @@ static void closeIo(user_data_t * user_data) {
     user_data->io = -1;
 }
 
-static void closeSrqIo(user_data_t * user_data) {
+static void closeMonitorIo(user_data_t * user_data) {
     fclose(user_data->fio);
     user_data->fio = NULL;
-    user_data->control_io = -1;
+    user_data->monitor_io = -1;
 }
 
 static int processIo(user_data_t * user_data) {
@@ -254,26 +254,32 @@ static int processIo(user_data_t * user_data) {
         }
     } else if (rc == 0) {
         closeIo(user_data);
-        printf("Connection closed\r\n");
+        printf("device connection closed\r\n");
     } else {
         SCPI_Input(&scpi_context, smbuffer, rc);
+        // printf("here \r\n");
+        // send(user_data->io, smbuffer, rc, 0);
+        // printf("here \r\n");
     }
 }
 
-static int processSrqIo(user_data_t * user_data) {
+static int processMonitorIo(user_data_t * user_data) {
     int rc;
     char smbuffer[10];  
-    rc = recv(user_data->control_io, smbuffer, sizeof(smbuffer), 0);
+    rc = recv(user_data->monitor_io, smbuffer, sizeof(smbuffer), 0);
     if (rc < 0) {
         if (errno != EWOULDBLOCK) {
-            closeSrqIo(user_data);
-            perror("  recv() failed");
+            closeMonitorIo(user_data);
+            perror("recv() failed");
         }
     } else if (rc == 0) {
-        closeSrqIo(user_data);
-        printf("Control Connection closed\r\n");
+        closeMonitorIo(user_data);
+        printf("monitor connection closed\r\n");
     } else {
         SCPI_Input(&scpi_context, smbuffer, rc);
+        // printf("here \r\n");
+        // send(user_data->monitor_io, smbuffer, rc, 0);
+        // printf("here \r\n");
     }
 }
 
@@ -288,8 +294,8 @@ int main(int argc, char** argv) {
     user_data_t user_data = {
         .io_listen = -1,
         .io = -1,
-        .control_io_listen = -1,
-        .control_io = -1,
+        .monitor_io_listen = -1,
+        .monitor_io = -1,
         .fio = NULL,
     };
 
@@ -299,7 +305,7 @@ int main(int argc, char** argv) {
     SCPI_Init(&scpi_context);
 
     user_data.io_listen = createServer(5025);
-    user_data.control_io_listen = createServer(5026);
+    user_data.monitor_io_listen = createServer(5026);
     
     while(1) {
         rc = waitServer(&user_data);
@@ -317,16 +323,16 @@ int main(int argc, char** argv) {
             processIoListen(&user_data);
         }
 
-        if ((user_data.control_io_listen >= 0) && FD_ISSET(user_data.control_io_listen, &user_data.fds)) {
-            processSrqIoListen(&user_data);
+        if ((user_data.monitor_io_listen >= 0) && FD_ISSET(user_data.monitor_io_listen, &user_data.fds)) {
+            processMonitorIoListen(&user_data);
         }
         
         if ((user_data.io >= 0) && FD_ISSET(user_data.io, &user_data.fds)) {
             processIo(&user_data);
         }
         
-        if ((user_data.control_io >= 0) && FD_ISSET(user_data.control_io, &user_data.fds)) {
-            processSrqIo(&user_data);
+        if ((user_data.monitor_io >= 0) && FD_ISSET(user_data.monitor_io, &user_data.fds)) {
+            processMonitorIo(&user_data);
         }
         
     }

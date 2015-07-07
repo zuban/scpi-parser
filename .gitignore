@@ -24,3 +24,4 @@ examples/*/test
 /libscpi/dist/
 
 /nbproject/
+nodejs/node_modules
