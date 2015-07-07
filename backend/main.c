@@ -47,7 +47,11 @@
 #include <unistd.h>
 
 #include "scpi/scpi.h"
-#include "../common/scpi-def.h"
+#include "../examples/common/scpi-def.h"
+
+
+#define CONTROL_PORT 5026
+
 
 
 typedef struct {
@@ -325,7 +329,8 @@ int main(int argc, char** argv) {
             processSrqIo(&user_data);
         }
         
-    }   
+    }
+    
     return (EXIT_SUCCESS);
 }
 
