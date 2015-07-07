@@ -40,6 +40,8 @@
 #include "scpi/scpi.h"
 #include "../common/scpi-def.h"
 
+
+
 size_t SCPI_Write(scpi_t * context, const char * data, size_t len) {
     (void) context;
     return fwrite(data, 1, len, stdout);
