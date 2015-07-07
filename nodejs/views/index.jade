@@ -1,0 +1,51 @@
+doctype
+html( lang="en" )
+    head
+        title Test
+        meta( charset='utf-8' )
+        meta( http-equiv='X-UA-Compatible', content='IE=edge' )
+        meta( name='viewport', content='width=device-width, initial-scale=1.0' )
+        meta( name='description', content='Baking Bootstrap Snippets with Jade' )
+        //- Bootswatch Theme
+        link(href="css/vendor/bootstrap.min.css", rel="stylesheet")
+        link(href="css/flat-ui.min.css", rel="stylesheet")
+    body(style="padding-bottom:10rem;")
+        .container      
+      #user
+        if(user)
+              h3(style="text-align: center;") Name: #{user.username}              
+              a(href="/sign-out", class="btn btn-block btn-lg btn-primary" style="width: 200px; margin: 0 auto;") Выйти
+              a(href="/test.html", class="btn btn-block btn-lg btn-primary" style="width: 200px; margin: 0 auto; margin-top: 10px") test
+        else
+            h3(style="text-align: center;") Вы не авторизованы!
+            a(class="btn btn-block btn-lg btn-primary" href="/auth" role="button" style="width: 200px; margin: 0 auto;") Авторизоваться
+               script( src='js/vendor/jquery.min.js' )
+               script( src='js/flat-ui.min.js' )
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

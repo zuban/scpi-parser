@@ -1,0 +1,36 @@
+
+
+doctype
+html( lang="en" )
+    head
+        title Baking Bootstrap Snippets with Jade
+        meta( charset='utf-8' )
+        meta( http-equiv='X-UA-Compatible', content='IE=edge' )
+        meta( name='viewport', content='width=device-width, initial-scale=1.0' )
+        meta( name='description', content='Baking Bootstrap Snippets with Jade' )
+        //- Bootswatch Theme
+        link(href="css/vendor/bootstrap.min.css", rel="stylesheet")
+        link(href="css/flat-ui.min.css", rel="stylesheet")
+        
+       
+    body(style="padding-bottom:10rem;")
+        .container
+   
+          
+
+
+
+section(id="login")
+    div(class="container" style="width: 300px;")
+      div(class="row")
+          div(class="col-xs-12")
+              div(class="form-wrap")
+                h3(style="text-align: center;") Log in 
+                    form(role="form" action="/auth" method="post" id="login-form" autocomplete="off")
+                        div(class="form-group")
+                            input(type="text" name="username" class="input user" placeholder="логин" class="form-control" style="margin-top: 20px;")
+                        div(class="form-group")
+                            input(type="password" name="password" class="input password" placeholder="пароль" class="form-control" )
+                        input(type="submit" id="btn-login" class="btn btn-block btn-lg btn-primary" value="Log in")
+               script( src='js/vendor/jquery.min.js' )
+               script( src='js/flat-ui.min.js' )
