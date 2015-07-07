@@ -1,3 +1,11 @@
+to build project 
+ - make
+ - cd backend ./server
+ - cd client ./client localhost 5052
+ - cd nodejs npm install
+ - node index.js
+
+==============================================================================================================
 SCPI parser library v2
 ===========
 
