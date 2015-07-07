@@ -46,6 +46,12 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 
+
+#include <stdlib.h>
+#include <stdio.h>
+#include <errno.h>
+#include <pthread.h>      
+
 #include "scpi/scpi.h"
 #include "../common/scpi-def.h"
 
@@ -134,7 +140,7 @@ static int createServer(int port) {
     }
     
     /* Listen on socket */
-    listen(fd, 1);
+    listen(fd, 2);
     if (rc < 0)
     {
         perror("listen() failed");
@@ -163,12 +169,9 @@ static int waitServer(int fd) {
     return rc;
 }
 
-/*
- * 
- */
-int main(int argc, char** argv) {
-    (void) argc;
-    (void) argv;
+
+void * server5025(void *arg) {
+
     int rc;
 
     int listenfd;
@@ -222,7 +225,92 @@ int main(int argc, char** argv) {
 
         close(clifd);
     }
+}
+
+void * server5026(void *arg) {
+
+    int rc;
+
+    int listenfd;
+    char smbuffer[10];
+
+    // user_context will be pointer to socket
+    scpi_context.user_context = NULL;
+    
+    SCPI_Init(&scpi_context);
+
+    listenfd = createServer(5025);
+    
+    while(1) {
+        int clifd;
+        struct sockaddr_in cliaddr;
+        socklen_t clilen;
+
+        clilen = sizeof(cliaddr);
+        clifd = accept(listenfd, (struct sockaddr *)&cliaddr, &clilen);
+        
+        if (clifd < 0) continue;
+
+        printf("Connection established %s\r\n", inet_ntoa(cliaddr.sin_addr));
+
+        scpi_context.user_context = &clifd;
+
+        while(1) {
+            rc = waitServer(clifd);
+            if (rc < 0) { // failed
+                perror("  recv() failed");
+                break;
+            }
+            if (rc == 0) { // timeout
+                SCPI_Input(&scpi_context, NULL, 0);
+            }
+            if (rc > 0) { // something to read
+                rc = recv(clifd, smbuffer, sizeof(smbuffer), 0);
+                if (rc < 0) {
+                    if (errno != EWOULDBLOCK) {
+                        perror("  recv() failed");
+                        break;
+                    }
+                } else if (rc == 0) {                
+                    printf("Connection closed\r\n");
+                    break;
+                } else {
+                    SCPI_Input(&scpi_context, smbuffer, rc);
+                }
+            }
+        }
+
+        close(clifd);
+    }
+}
+
+/*
+ * 
+ */
+int main(int argc, char** argv) {
+    (void) argc;
+    (void) argv;
+
+
+    int id1, id2, result;
+pthread_t thread1, thread2;
+id1 = 1;
+result = pthread_create(&thread1, NULL, server5025, &id1);
+if (result != 0) {
+perror("Creating the first thread");
+return EXIT_FAILURE;
+}
+id2 = 2;
+result = pthread_create(&thread2, NULL, server5026, &id2);
+if (result != 0) {
+perror("Creating the second thread");
+return EXIT_FAILURE;
+}
+
+
     
     return (EXIT_SUCCESS);
 }
+
+
 

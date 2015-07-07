@@ -225,7 +225,8 @@ static int processSrqIoListen(user_data_t * user_data) {
     socklen_t clilen;
     clilen = sizeof(cliaddr);
 
-    user_data->control_io = accept(user_data->control_io_listen, (struct sockaddr *)&cliaddr, &clilen);    
+    user_data->control_io = accept(user_data->control_io_listen, (struct sockaddr *)&cliaddr, &clilen); 
+    user_data->fio = fdopen(user_data->control_io, "r+");   
     printf("Control Connection established %s\r\n", inet_ntoa(cliaddr.sin_addr));
 }
 
@@ -236,7 +237,8 @@ static void closeIo(user_data_t * user_data) {
 }
 
 static void closeSrqIo(user_data_t * user_data) {
-    close(user_data->control_io);
+    fclose(user_data->fio);
+    user_data->fio = NULL;
     user_data->control_io = -1;
 }
 
@@ -270,7 +272,7 @@ static int processSrqIo(user_data_t * user_data) {
         closeSrqIo(user_data);
         printf("Control Connection closed\r\n");
     } else {
-        // nothing to do
+        SCPI_Input(&scpi_context, smbuffer, rc);
     }
 }
 
@@ -296,7 +298,7 @@ int main(int argc, char** argv) {
     SCPI_Init(&scpi_context);
 
     user_data.io_listen = createServer(5025);
-    user_data.control_io_listen = createServer(CONTROL_PORT);
+    user_data.control_io_listen = createServer(5026);
     
     while(1) {
         rc = waitServer(&user_data);

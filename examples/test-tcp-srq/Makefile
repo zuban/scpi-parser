@@ -1,5 +1,5 @@
 
-PROG = test
+PROG = server
 
 SRCS = main.c ../common/scpi-def.c
 CFLAGS += -Wextra -Wmissing-prototypes -Wimplicit -I ../../libscpi/inc/
