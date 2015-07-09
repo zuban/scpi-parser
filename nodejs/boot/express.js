@@ -51,10 +51,10 @@ module.exports = function (app) {
 
 
     var HOST = '127.0.0.1';
-    var PORT = 5026;
+    var PORT = 5025;
 
     var client = new net.Socket();
-
+    client.setTimeout(0);
 
     client.on('data', function(data) {
         io.emit('message',  String.fromCharCode.apply(null, new Uint16Array(data)));
@@ -71,6 +71,22 @@ module.exports = function (app) {
         console.log('CONNECTED TO: ' + HOST + ':' + PORT);
         io.emit('connected', "connected");
     });
+
+    client.on('error', function(e) {
+    if(e.code == 'ECONNREFUSED') {
+        console.log('Is the server running at ' + PORT + '?');
+
+        client.setTimeout(4000, function() {
+            client.connect(PORT, HOST, function(){
+                console.log('CONNECTED TO: ' + HOST + ':' + PORT);
+                client.write('I am the inner superman');
+            });
+        });
+
+        console.log('Timeout for 5 seconds before trying port:' + PORT + ' again');
+
+    }   
+});
 
     io.on('connection', function(socket){
         console.log('a user connected');
