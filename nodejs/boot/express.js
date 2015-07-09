@@ -4,6 +4,7 @@ var passport = require('passport');
 var path = require('path');
 var flash = require('connect-flash');
 var http = require('http');
+var net = require('net');
 
 
 
@@ -48,17 +49,46 @@ module.exports = function (app) {
     app.set('io', io);
     console.log("init successful");
 
- io.on('connection', function(socket){
-  console.log('a user connected');
-  socket.on('chat message', function(msg){
-    console.log('message: ' + msg);
-  });
 
-  socket.on('disconnect', function(){
-    console.log('user disconnected');
-  });
-});
+    var HOST = '127.0.0.1';
+    var PORT = 5026;
+
+    var client = new net.Socket();
 
 
-});
+    client.on('data', function(data) {
+        io.emit('message',  String.fromCharCode.apply(null, new Uint16Array(data)));
+        console.log('DATA: ' + data);    
+    });
+    // Add a 'close' event handler for the client socket
+    client.on('close', function() {
+        console.log('Connection closed');
+        io.emit('disconnected', "disconnected");
+        io.emit('restart', "true");
+    });
+
+    client.connect(PORT, HOST, function() {
+        console.log('CONNECTED TO: ' + HOST + ':' + PORT);
+        io.emit('connected', "connected");
+    });
+
+    io.on('connection', function(socket){
+        console.log('a user connected');
+        socket.on('message', function(msg){
+                client.write(msg);
+                console.log('message sent: ' + msg);
+              });
+                socket.on('restart', function(msg){
+                client.connect(PORT, HOST, function() {
+                    console.log('CONNECTED TO: ' + HOST + ':' + PORT);
+                    io.emit('connected', "true");
+                });
+              });
+
+        socket.on('disconnect', function(){
+            console.log('user disconnected');
+        });
+    });
+
+    });
 };

@@ -3,11 +3,9 @@ var passport = require('passport');
 module.exports = function (app) {
 
    
-setInterval(function () {app.get('io').emit('chat message', "hello from server");}, 3000);
+//setInterval(function () {app.get('io').emit('chat message', "hello from server");}, 3000);
     
      
-
-
     app.get('/auth', function (req, res) {
 
         if (req.isAuthenticated()) {

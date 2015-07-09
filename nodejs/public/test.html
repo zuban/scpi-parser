@@ -65,7 +65,7 @@ xhr.send();
                </ul>
                <form class="navbar-form navbar-right" action="#" role="search">
                 <div class="form-group">
-                   <a href="#fakelink">Sing in as </a>
+                   <a id="state" href="#fakelink">Connected</a>
                 </div>
               </form>
             </div><!-- /.navbar-collapse -->
@@ -73,14 +73,67 @@ xhr.send();
         </div>
       </div>  
     </div>
-    <a id="target" class="btn btn-block btn-lg btn-primary">Primary Button</a>
+    <div class="form-group" style="width: 200px; margin: 0 auto; padding-bottom: 10px;">
+            <input id="commands" type="text" value="" placeholder="Set command" class="form-control">
+    </div>
+    <a id="target" style="width: 200px; margin: 0 auto;" class="btn btn-block btn-lg btn-primary">Send data</a>
+    <div class="row" style="margin: 0 auto;width: 500px;text-align: center;">
+   <ul  id="messages"></ul>
+
+</div>
+
+
+
+<div id="mdlrest" class="modal fade">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title">Connection lost</h4>
+      </div>
+      <div class="modal-body">
+        <p>Try to restart socket connection?&hellip;</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        <button id="restart" type="button" class="btn btn-primary">Restart</button>
+      </div>
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+
+
+
+
 <script>
-  var socket = io();
-  $( "#target" ).click(function() {
-  socket.emit('chat message', "test mes");
+var socket = io();
+$( "#target" ).click(function() {
+    socket.emit('message', $('#commands').val());
 });
-    socket.on('chat message', function(msg){
+
+socket.on('message', function(msg){
     console.log(msg);
+    $("#messages").append('<li> <a>'+msg+'</a></li>');
+  });
+
+socket.on('restart', function(msg){
+    console.log(msg);
+    $('#mdlrest').modal('show');
+  });
+
+socket.on('connected', function(msg){
+    console.log(msg);
+    $('a#state').text('Connected');
+  });
+
+socket.on('disconnected', function(msg){
+    console.log(msg);
+    $('a#state').text('Disconnected');
+  });
+
+$( "#restart" ).click(function() {
+  socket.emit('restart', "true");
+   $('#mdlrest').modal('hide');
   });
 </script>
     <!-- /.container -->
