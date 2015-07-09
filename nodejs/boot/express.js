@@ -3,6 +3,9 @@ var express = require('express');
 var passport = require('passport');
 var path = require('path');
 var flash = require('connect-flash');
+var http = require('http');
+
+
 
 module.exports = function (app) {
 
@@ -35,4 +38,27 @@ module.exports = function (app) {
     if ('development' == app.get('env')) {
         app.use(express.errorHandler());
     }
+
+    var server = http.createServer(app).listen(app.get('port'), function () {
+    if ('development' == app.get('env')) {
+        console.log('Express server listening on port ' + app.get('port'));
+    }
+    var io = require('socket.io')(server);
+
+    app.set('io', io);
+    console.log("init successful");
+
+ io.on('connection', function(socket){
+  console.log('a user connected');
+  socket.on('chat message', function(msg){
+    console.log('message: ' + msg);
+  });
+
+  socket.on('disconnect', function(){
+    console.log('user disconnected');
+  });
+});
+
+
+});
 };
