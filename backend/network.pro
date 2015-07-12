@@ -10,7 +10,7 @@ TARGET = network
 TEMPLATE = app
 
 QT_SRCS += ../common/scpi-def.c
-QMAKE_CFLAGS += -Wextra -Wmissing-prototypes -Wimplicit -I ../libscpi/inc/
+QMAKE_CXXFLAGS += -Wextra -Wmissing-prototypes -Wimplicit -I ../libscpi/inc/
 QMAKE_LFLAGS += ../libscpi/dist/libscpi.a -Wl,--as-needed
 
 
