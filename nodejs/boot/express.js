@@ -5,6 +5,7 @@ var path = require('path');
 var flash = require('connect-flash');
 var http = require('http');
 var net = require('net');
+var shell = require('shelljs/global');
 
 
 
@@ -89,6 +90,7 @@ module.exports = function (app) {
 });
 
     io.on('connection', function(socket){
+        echo('bash tests');
         console.log('a user connected');
         socket.on('message', function(msg){
                 client.write(msg);
